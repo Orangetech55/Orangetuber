@@ -497,35 +497,100 @@ textarea.inp{ font-size: var(--fs-md) !important; min-height:80px }
 }
 .mbn-overlay.open{ display:block; }
 
-/* ── Mobile adjustments when bottom nav is active ───────────── */
-@media (max-width:768px){
-  /* Show the bottom nav */
-  .mobile-bottom-nav{ display:flex; }
+/* ── Panel slide transitions ─────────────────────────────────── */
+@keyframes slideInRight{
+  from{ opacity:0; transform:translateX(40px) }
+  to  { opacity:1; transform:translateX(0)    }
+}
+@keyframes slideInLeft{
+  from{ opacity:0; transform:translateX(-40px) }
+  to  { opacity:1; transform:translateX(0)     }
+}
+.slide-in-right{ animation:slideInRight .26s cubic-bezier(.32,0,.67,0) forwards }
+.slide-in-left { animation:slideInLeft  .26s cubic-bezier(.32,0,.67,0) forwards }
 
-  /* Show the iOS status bar, hide the old sticky header's own status row */
+/* ── Top scroll-pill nav (mobile swipe indicator) ────────────── */
+.mobile-top-nav{
+  display: none; /* shown only on mobile */
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -ms-overflow-style: none;
+  gap: 6px;
+  padding: 8px 16px 10px;
+  background: #050d1a;
+  border-bottom: 1px solid rgba(30,58,92,.5);
+  position: sticky; top:0; z-index:29;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.mobile-top-nav::-webkit-scrollbar{ display:none }
+.mtn-pill{
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 12px; font-weight: 500;
+  color: #4a6a8a;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  font-family:'Inter',sans-serif;
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
+}
+.mtn-pill.active{
+  color: var(--orange);
+  background: rgba(196,154,108,.12);
+  border-color: rgba(196,154,108,.3);
+  font-weight: 600;
+}
+
+/* ── Swipe hint (first visit nudge) ─────────────────────────── */
+@keyframes swipeNudge{
+  0%,100%{ transform:translateX(0);opacity:1 }
+  40%    { transform:translateX(-8px);opacity:.7 }
+}
+.swipe-hint{
+  display:none;
+  position:fixed; bottom:calc(90px + env(safe-area-inset-bottom,0px) + 10px);
+  left:50%; transform:translateX(-50%);
+  background:rgba(10,22,40,.92); border:1px solid rgba(30,58,92,.8);
+  border-radius:100px; padding:6px 14px;
+  font-size:11px; color:#7a9bbf;
+  pointer-events:none; z-index:55;
+  animation:swipeNudge 1s ease-in-out 1.2s 2;
+}
+
+/* ── Mobile adjustments when bottom nav is active ─────────────── */
+@media (max-width:768px){
+  /* Show bottom nav + top pill strip */
+  .mobile-bottom-nav{ display:flex; }
+  .mobile-top-nav{ display:flex; }
+  .swipe-hint{ display:block; }
+
+  /* Show the iOS status bar, hide the old sticky header row */
   .ios-status-bar{ display:flex; }
 
-  /* Hide the old top tab bar — replaced by bottom nav */
+  /* Hide the old scrollable tab bar — replaced by pill strip + bottom nav */
   .tab-bar{ display:none !important; }
 
-  /* The sticky header itself — keep it but smaller */
+  /* Sticky header sits below the ios-status-bar */
   header{ padding-top:0 !important; }
-  /* Status bar above header replaces the safe-area padding */
-  header:first-of-type{ padding-top:0 !important }
 
-  /* Main content — push up from bottom nav + add top breathing room */
+  /* Main content — space for bottom nav */
   main{
-    padding-bottom: calc(90px + env(safe-area-inset-bottom,16px)) !important;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom,16px)) !important;
+    overflow-x: hidden;
   }
 
-  /* Cards on mobile: slightly lighter surface for legibility */
+  /* Cards on mobile: slightly elevated surface */
   .card{
     background: #0f2240 !important;
     border-color: rgba(30,58,92,.9) !important;
     box-shadow: 0 2px 12px rgba(0,0,0,.25) !important;
   }
 
-  /* Stat number pop on mobile */
+  /* Stat numbers pop */
   #stat-subs,#stat-views,#stat-videos,
   #stat-avg,#stat-eng,#stat-freq,#stat-vph{
     font-size: clamp(26px, 6vw, 34px) !important;
@@ -580,7 +645,18 @@ textarea.inp{ font-size: var(--fs-md) !important; min-height:80px }
   </div>
 </header>
 
-<main style="max-width:1200px;margin:0 auto;padding:20px 16px">
+<!-- ══════════════════════════════════════
+     MOBILE TOP PILL NAV (swipe indicator)
+     Sticky below header · mobile only
+══════════════════════════════════════ -->
+<nav class="mobile-top-nav" id="mobile-top-nav" aria-label="Tab navigation">
+  <!-- Pills injected by JS -->
+</nav>
+
+<!-- Swipe hint toast -->
+<div class="swipe-hint" id="swipe-hint">← swipe to navigate →</div>
+
+<main id="main-swipe" style="max-width:1200px;margin:0 auto;padding:20px 16px">
 
 <!-- ══════════════════════════════════════
      PANE 1: OVERVIEW
@@ -5801,6 +5877,135 @@ if (CFG.apiKey && CFG.channelId) {
     loadChannelData();
   }
 }
+
+// ════════════════════════════════════════════════════════════════
+// SWIPE NAVIGATION + TOP PILL STRIP
+// ════════════════════════════════════════════════════════════════
+
+const SWIPE_TABS = [
+  { id:'overview',  icon:'📊', label:'Overview'  },
+  { id:'keywords',  icon:'🔍', label:'Keywords'  },
+  { id:'optimizer', icon:'🎯', label:'Optimize'  },
+  { id:'video',     icon:'📹', label:'Check'     },
+  { id:'ideas',     icon:'💡', label:'Ideas'     },
+  { id:'ai',        icon:'✨', label:'AI'        },
+  { id:'products',  icon:'📦', label:'Products'  },
+  { id:'plan',      icon:'📅', label:'Plan'      },
+];
+
+let currentTabIdx = 0;
+
+// Build top pill strip
+function buildTopPillNav() {
+  const nav = document.getElementById('mobile-top-nav');
+  if (!nav) return;
+  nav.innerHTML = SWIPE_TABS.map((t, i) => `
+    <button class="mtn-pill${i === 0 ? ' active' : ''}" id="mtn-${t.id}" onclick="swipeGoTo(${i})">
+      ${t.icon} ${t.label}
+    </button>`).join('');
+}
+
+// Navigate to index, with optional slide direction override
+function swipeGoTo(idx, direction) {
+  if (idx < 0 || idx >= SWIPE_TABS.length) return;
+  const tab   = SWIPE_TABS[idx];
+  const prev  = currentTabIdx;
+  currentTabIdx = idx;
+
+  // Determine slide direction
+  const dir = direction !== undefined ? direction : (idx > prev ? 'left' : 'right');
+
+  // Switch the actual pane
+  switchTab(tab.id);
+
+  // Apply slide animation to the incoming pane
+  const pane = document.getElementById('pane-' + tab.id);
+  if (pane && window.innerWidth <= 768) {
+    pane.classList.remove('slide-in-right','slide-in-left','fade');
+    void pane.offsetWidth; // reflow
+    pane.classList.add(dir === 'left' ? 'slide-in-right' : 'slide-in-left');
+  }
+
+  // Update pill strip
+  document.querySelectorAll('.mtn-pill').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+  // Scroll active pill into view
+  const activePill = document.getElementById('mtn-' + tab.id);
+  if (activePill) activePill.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+
+  // Dismiss swipe hint after first swipe
+  const hint = document.getElementById('swipe-hint');
+  if (hint) { hint.style.display = 'none'; }
+}
+
+// Patch switchTab to keep pill strip in sync (handles bottom nav + direct calls)
+const _origSwitchTabSwipe = window.switchTab;
+window.switchTab = function(name) {
+  _origSwitchTabSwipe(name);
+  // Sync pill strip active state
+  const idx = SWIPE_TABS.findIndex(t => t.id === name);
+  if (idx >= 0) {
+    currentTabIdx = idx;
+    document.querySelectorAll('.mtn-pill').forEach((el, i) => {
+      el.classList.toggle('active', i === idx);
+    });
+    const activePill = document.getElementById('mtn-' + name);
+    if (activePill) activePill.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  }
+};
+
+// Touch swipe detection on the main content area
+(function() {
+  let startX = 0, startY = 0, startTime = 0;
+  const THRESHOLD = 52;  // min px horizontal to count as swipe
+  const ANGLE_MAX = 0.6; // max vertical/horizontal ratio
+
+  function onTouchStart(e) {
+    // ignore if touch is on a scrollable element (lists, textareas, modals)
+    const el = e.target;
+    if (el.closest('.overlay, #script-modal, #settings-modal, #optimize-modal, .scroll-area, textarea, select, input, [data-no-swipe]')) return;
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+    startTime = Date.now();
+  }
+
+  function onTouchEnd(e) {
+    if (!startX) return;
+    if (window.innerWidth > 768) { startX = 0; return; }
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    const dt = Date.now() - startTime;
+    startX = 0;
+
+    // Must be fast enough, horizontal enough, and long enough
+    if (dt > 500) return;
+    if (Math.abs(dx) < THRESHOLD) return;
+    if (Math.abs(dy) / Math.abs(dx) > ANGLE_MAX) return;
+
+    if (dx < 0) {
+      // swipe LEFT → next tab
+      swipeGoTo(currentTabIdx + 1, 'left');
+    } else {
+      // swipe RIGHT → previous tab
+      swipeGoTo(currentTabIdx - 1, 'right');
+    }
+  }
+
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchend',   onTouchEnd,   { passive: true });
+})();
+
+// Init pill nav on page load
+buildTopPillNav();
+
+// Hide swipe hint after 5 seconds regardless
+setTimeout(() => {
+  const h = document.getElementById('swipe-hint');
+  if (h) h.style.display = 'none';
+}, 5000);
 
 // ════════════════════════════════════════════════════════════════
 // MOBILE BOTTOM NAV — iOS-style (FORM App pattern)
