@@ -360,9 +360,193 @@ textarea.inp{ font-size: var(--fs-md) !important; min-height:80px }
     padding-bottom:max(var(--sp-lg), env(safe-area-inset-bottom)) !important
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   NATIVE iOS BOTTOM NAV — FORM-style (mobile only)
+   Frosted glass bar · lifted active icon · Dynamic Island status
+   Matches FORM App design system: backdrop-filter, lifted icon,
+   filled rounded container on active, SF-style label sizing.
+   Only visible at ≤768px — desktop/tablet unchanged.
+══════════════════════════════════════════════════════════════ */
+
+/* ── iOS Status Bar (Dynamic Island frame) ──────────────────── */
+.ios-status-bar{
+  display: none; /* shown only on mobile via media query */
+  height: 54px;
+  align-items: flex-end;
+  padding: 0 24px 8px;
+  justify-content: space-between;
+  flex-shrink: 0;
+  background: #050d1a;
+  position: sticky; top:0; z-index:31;
+  border-bottom: 1px solid rgba(30,58,92,.5);
+}
+.ios-status-time{
+  font-size:15px; font-weight:600; color:#e8f0f8; letter-spacing:-.3px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.ios-status-icons{ display:flex; gap:6px; align-items:center; font-size:13px; color:#e8f0f8; }
+.ios-island{
+  position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  width:116px; height:32px;
+  background:#000; border-radius:18px;
+  pointer-events:none; z-index:100;
+}
+
+/* ── Bottom Navigation Bar ───────────────────────────────────── */
+.mobile-bottom-nav{
+  display: none; /* desktop: hidden */
+  position: fixed;
+  bottom: 0; left:0; right:0;
+  height: calc(80px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(5, 13, 26, 0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(30,58,92,.7);
+  align-items: flex-start;
+  padding-top: 10px;
+  gap: 0;
+  z-index: 50;
+  box-shadow: 0 -8px 32px rgba(0,0,0,.4);
+}
+
+/* Each nav item */
+.mbn-item{
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  padding: 6px 4px 4px;
+  border: none; background: none; cursor: pointer;
+  border-radius: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-family:'Inter',sans-serif;
+}
+/* Icon wrapper — the part that lifts and fills on active */
+.mbn-icon{
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  transition: background .22s ease, transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .22s;
+  font-size: 18px; line-height:1;
+}
+.mbn-item.active .mbn-icon{
+  background: var(--orange);
+  box-shadow: 0 4px 14px rgba(196,154,108,.4);
+  transform: translateY(-3px);
+}
+/* Label */
+.mbn-label{
+  font-size: 10px; font-weight: 500; color: #4a6a8a;
+  letter-spacing: .15px;
+  transition: color .2s;
+  line-height: 1;
+}
+.mbn-item.active .mbn-label{ color: var(--orange); font-weight: 600; }
+
+/* ── More drawer (sheet that slides up showing extra tabs) ─── */
+.mbn-more-sheet{
+  position:fixed; bottom:0; left:0; right:0; z-index:60;
+  background: rgba(10,22,40,.97);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(30,58,92,.8);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  padding:16px 20px calc(80px + env(safe-area-inset-bottom,0px));
+  transform:translateY(100%);
+  transition:transform .32s cubic-bezier(.32,0,.67,0);
+  box-shadow:0 -12px 48px rgba(0,0,0,.5);
+}
+.mbn-more-sheet.open{
+  transform:translateY(0);
+  transition:transform .32s cubic-bezier(.33,1,.68,1);
+}
+/* Sheet handle */
+.mbn-sheet-handle{
+  width:36px; height:4px; border-radius:2px;
+  background:rgba(122,155,191,.3); margin:0 auto 16px;
+}
+/* Sheet title */
+.mbn-sheet-title{
+  font-size:11px; font-weight:700; color:#4a6a8a;
+  text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px;
+}
+/* Sheet grid of extra tabs */
+.mbn-sheet-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+}
+.mbn-sheet-item{
+  background:#0f2240; border:1px solid rgba(30,58,92,.8);
+  border-radius:12px; padding:14px 12px;
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer; border:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s;
+  font-family:'Inter',sans-serif; text-align:left;
+}
+.mbn-sheet-item:active{ background:#1a3050; }
+.mbn-sheet-item.active-sheet{ border:1px solid rgba(196,154,108,.4); background:#1a2e4a; }
+.mbn-sheet-icon{ font-size:20px; flex-shrink:0; }
+.mbn-sheet-label{ font-size:13px; font-weight:500; color:#e8f0f8; }
+.mbn-sheet-sub{ font-size:10px; color:#5a7a9a; margin-top:1px; }
+
+/* Overlay behind more sheet */
+.mbn-overlay{
+  position:fixed; inset:0; z-index:59;
+  background:rgba(0,0,0,.4);
+  display:none;
+}
+.mbn-overlay.open{ display:block; }
+
+/* ── Mobile adjustments when bottom nav is active ───────────── */
+@media (max-width:768px){
+  /* Show the bottom nav */
+  .mobile-bottom-nav{ display:flex; }
+
+  /* Show the iOS status bar, hide the old sticky header's own status row */
+  .ios-status-bar{ display:flex; }
+
+  /* Hide the old top tab bar — replaced by bottom nav */
+  .tab-bar{ display:none !important; }
+
+  /* The sticky header itself — keep it but smaller */
+  header{ padding-top:0 !important; }
+  /* Status bar above header replaces the safe-area padding */
+  header:first-of-type{ padding-top:0 !important }
+
+  /* Main content — push up from bottom nav + add top breathing room */
+  main{
+    padding-bottom: calc(90px + env(safe-area-inset-bottom,16px)) !important;
+  }
+
+  /* Cards on mobile: slightly lighter surface for legibility */
+  .card{
+    background: #0f2240 !important;
+    border-color: rgba(30,58,92,.9) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25) !important;
+  }
+
+  /* Stat number pop on mobile */
+  #stat-subs,#stat-views,#stat-videos,
+  #stat-avg,#stat-eng,#stat-freq,#stat-vph{
+    font-size: clamp(26px, 6vw, 34px) !important;
+  }
+}
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════
+     iOS STATUS BAR (mobile only)
+══════════════════════════════════════ -->
+<div class="ios-status-bar" id="ios-status-bar">
+  <div class="ios-island"></div>
+  <div class="ios-status-time" id="ios-clock">9:41</div>
+  <div class="ios-status-icons">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="currentColor" opacity=".4"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="currentColor" opacity=".6"/><rect x="9" y="0.5" width="3" height="11.5" rx="1" fill="currentColor" opacity=".8"/><rect x="13.5" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 2.5C10.4 2.5 12.6 3.5 14.1 5.2L15.2 4C13.4 2 10.8 1 8 1C5.2 1 2.6 2 0.8 4L1.9 5.2C3.4 3.5 5.6 2.5 8 2.5Z" fill="currentColor" opacity=".4"/><path d="M8 5C9.7 5 11.2 5.7 12.3 6.8L13.4 5.6C12 4.2 10.1 3.5 8 3.5C5.9 3.5 4 4.2 2.6 5.6L3.7 6.8C4.8 5.7 6.3 5 8 5Z" fill="currentColor" opacity=".7"/><path d="M8 7.5C9 7.5 9.9 7.9 10.5 8.6L11.6 7.4C10.7 6.5 9.4 6 8 6C6.6 6 5.3 6.5 4.4 7.4L5.5 8.6C6.1 7.9 7 7.5 8 7.5Z" fill="currentColor"/><circle cx="8" cy="11" r="1.2" fill="currentColor"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="currentColor" stroke-opacity=".35"/><rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor"/><path d="M23 4v4a2 2 0 0 0 0-4Z" fill="currentColor" opacity=".4"/></svg>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════
      HEADER
@@ -811,6 +995,74 @@ Hey guys welcome back to my channel. Today I'm going to be reviewing the FIFINE 
      PANE 6: AI TOOLS
 ══════════════════════════════════════ -->
 <div id="pane-ai" style="display:none" class="fade">
+
+  <!-- ── AI Routing Status Bar ───────────────────────────────── -->
+  <div id="ai-routing-bar" style="background:#0a1628;border:1px solid #1e3a5c;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;flex-wrap:wrap;gap:10px">
+    <div style="font-size:11px;font-weight:700;color:#C49A6C;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">🗺 AI Routing</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;flex:1">
+      <div id="route-viral"   style="background:#1a1a08;border:1px solid #854d0e;border-radius:20px;padding:3px 10px;font-size:11px"><span style="color:#f59e0b">💡 Viral Ideas:</span> <span style="color:#fbbf24" id="route-viral-lbl">—</span></div>
+      <div id="route-script"  style="background:#120d1f;border:1px solid #5b21b6;border-radius:20px;padding:3px 10px;font-size:11px"><span style="color:#a78bfa">✍️ Scripts:</span> <span style="color:#c4b5fd" id="route-script-lbl">—</span></div>
+      <div id="route-research"style="background:#071c14;border:1px solid #065f46;border-radius:20px;padding:3px 10px;font-size:11px"><span style="color:#34d399">🔍 Research:</span> <span style="color:#6ee7b7" id="route-research-lbl">—</span></div>
+      <div id="route-polish"  style="background:#0c1829;border:1px solid #1e40af;border-radius:20px;padding:3px 10px;font-size:11px"><span style="color:#60a5fa">✨ Polish:</span> <span style="color:#93c5fd" id="route-polish-lbl">—</span></div>
+    </div>
+    <button onclick="refreshRoutingBar()" class="pill-gray" style="font-size:10px;padding:3px 8px;flex-shrink:0">↻ Refresh</button>
+  </div>
+
+  <!-- ── AI Script Writer (full-width) ──────────────────────── -->
+  <div class="card" style="margin-bottom:16px;border:1px solid #5b21b6">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="section-title" style="margin-bottom:2px">✍️ AI Script Writer</div>
+        <div style="font-size:12px;color:#7a9bbf">Powered by Claude (script writing) · ChatGPT (viral) · Gemini (research). Writes a complete word-for-word script.</div>
+      </div>
+      <div id="script-writer-ai-badge" style="background:#120d1f;border:1px solid #5b21b6;border-radius:20px;padding:3px 10px;font-size:11px;color:#a78bfa;flex-shrink:0">Using: —</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px" class="prod-form-grid-3">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#e8f0f8;display:block;margin-bottom:5px">Product / Topic *</label>
+        <input class="inp" id="sw-product" placeholder="e.g. FIFINE AM8 Microphone">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#e8f0f8;display:block;margin-bottom:5px">Format</label>
+        <select class="inp" id="sw-format">
+          <option value="long">Long-form (8–12 min)</option>
+          <option value="short">Short (60 sec)</option>
+          <option value="review">Honest Review</option>
+          <option value="comparison">VS Comparison</option>
+          <option value="listicle">Top 5 / Roundup</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#e8f0f8;display:block;margin-bottom:5px">Hook Type</label>
+        <select class="inp" id="sw-hook">
+          <option value="challenge">Challenge / disbelief</option>
+          <option value="story">Personal story</option>
+          <option value="stat">Shocking stat</option>
+          <option value="question">Provocative question</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px" class="prod-form-grid-2">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#e8f0f8;display:block;margin-bottom:5px">Price (optional)</label>
+        <input class="inp" id="sw-price" placeholder="e.g. $79" type="text">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#e8f0f8;display:block;margin-bottom:5px">Key angle / verdict</label>
+        <input class="inp" id="sw-verdict" placeholder="e.g. Best budget mic under $100">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="pill-orange" style="flex:1;min-width:120px" onclick="aiWriteScript()">🤖 Write Full Script</button>
+      <button class="pill-camel" style="min-width:100px" onclick="aiWriteViralIdeas()">💡 Viral Ideas First</button>
+    </div>
+    <div id="sw-loading" style="display:none;text-align:center;padding:20px">
+      <div style="width:24px;height:24px;border:2px solid #1e3a5c;border-top-color:#a78bfa;border-radius:50%;margin:0 auto 8px" class="spin"></div>
+      <div style="font-size:12px;color:#7a9bbf" id="sw-loading-msg">Writing script…</div>
+    </div>
+    <div id="sw-result" style="margin-top:12px"></div>
+  </div>
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
 
     <!-- Title Generator -->
@@ -1172,7 +1424,8 @@ Hey guys welcome back to my channel. Today I'm going to be reviewing the FIFINE 
           <div style="font-size:16px;font-weight:700;color:#e8f0f8" id="script-modal-title">100K Script</div>
           <div style="font-size:12px;color:#7a9bbf" id="script-modal-sub">Full word-for-word script</div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="polishScript()" class="pill-camel" style="font-size:12px;border:1px solid #7c3aed;color:#a78bfa" id="polish-btn">✨ Polish</button>
           <button onclick="launchTeleprompter()" class="pill-camel" style="font-size:12px">📜 Teleprompter</button>
           <button onclick="copyFullScript()" class="pill-gray" style="font-size:12px">Copy</button>
           <button onclick="exportFullScript()" class="pill-orange" style="font-size:12px">Export .txt</button>
@@ -1485,6 +1738,32 @@ Hey guys welcome back to my channel. Today I'm going to be reviewing the FIFINE 
       </div>
     </div>
 
+    <!-- ── Claude (Script Writing & Polish) ── -->
+    <div style="background:#1a2e4a;border-left:3px solid #7c3aed;border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:14px;font-size:11px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.04em">🟣 Claude (Anthropic) — Script Writing · Polish · Viral Ideas</div>
+
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;font-weight:600;color:#e8f0f8;display:block;margin-bottom:6px">Claude API Key <span style="font-weight:400;color:#5a7a9a">(best for scripts & final polish)</span></label>
+      <input class="inp" id="cfg-claude" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-..." style="font-family:monospace;letter-spacing:.04em">
+      <div style="font-size:11px;color:#5a7a9a;margin-top:4px">
+        Get key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#a78bfa">console.anthropic.com</a>. Powers <strong style="color:#e8f0f8">Script Writing</strong>, <strong style="color:#e8f0f8">✨ Polish</strong>, and <strong style="color:#e8f0f8">Viral Idea</strong> generation using <strong style="color:#e8f0f8">Claude Haiku</strong> (fastest &amp; cheapest).
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <button class="pill-gray" style="font-size:12px;padding:5px 14px" onclick="testClaudeKey()">Test Connection</button>
+        <span id="claude-test-status" style="font-size:12px;color:#5a7a9a"></span>
+      </div>
+    </div>
+
+    <!-- AI Routing Guide -->
+    <div style="background:#0a1628;border:1px solid #1e3a5c;border-radius:8px;padding:12px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:#e8f0f8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">🗺 AI Routing — which model does what</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+        <div style="background:#0f2240;border-radius:6px;padding:7px 10px"><span style="color:#f59e0b;font-weight:700">💡 Viral Ideas</span><br><span style="color:#9ca3af">ChatGPT → Claude → Gemini → Groq</span></div>
+        <div style="background:#0f2240;border-radius:6px;padding:7px 10px"><span style="color:#a78bfa;font-weight:700">✍️ Script Writing</span><br><span style="color:#9ca3af">Claude → Groq → Gemini → ChatGPT</span></div>
+        <div style="background:#0f2240;border-radius:6px;padding:7px 10px"><span style="color:#34d399;font-weight:700">🔍 Research</span><br><span style="color:#9ca3af">ChatGPT → Gemini → Claude → Groq</span></div>
+        <div style="background:#0f2240;border-radius:6px;padding:7px 10px"><span style="color:#60a5fa;font-weight:700">✨ Final Polish</span><br><span style="color:#9ca3af">Claude → ChatGPT → Gemini → Groq</span></div>
+      </div>
+    </div>
+
     <!-- ── YouTube Account (Token Paste) ── -->
     <div style="background:#1a2e4a;border-left:3px solid #1D9E75;border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:14px;font-size:11px;font-weight:700;color:#1D9E75;text-transform:uppercase;letter-spacing:.04em">🔗 YouTube Account (Write Access — Reply · Title · Thumbnail)</div>
 
@@ -1529,7 +1808,7 @@ Hey guys welcome back to my channel. Today I'm going to be reviewing the FIFINE 
 <script>
 // ─── Config ────────────────────────────────────────────────────
 const STORE_KEY = 'ot_intel_v1';
-let CFG = { apiKey:'', channelId:'', region:'US', openaiKey:'', geminiKey:'', groqKey:'', accessToken:'', competitors:[], savedKws:[], savedIdeas:[], products:[], monthlyPlan:[] };
+let CFG = { apiKey:'', channelId:'', region:'US', openaiKey:'', geminiKey:'', groqKey:'', claudeKey:'', accessToken:'', competitors:[], savedKws:[], savedIdeas:[], products:[], monthlyPlan:[] };
 let CHANNEL_DATA = null;
 let VIDEO_DATA   = [];
 let viewsChart   = null;
@@ -1615,6 +1894,7 @@ function switchTab(name) {
   if (name==='products')  renderProducts();
   if (name==='plan')      renderPlan();
   if (name==='optimizer') switchSubTab('seo'); // default to SEO sub-tab
+  if (name==='ai')        setTimeout(refreshRoutingBar, 50);
 }
 
 // ─── Sub-tabs (inside Optimizer) ──────────────────────────────
@@ -1769,9 +2049,11 @@ function openSettings() {
   document.getElementById('cfg-openai').value       = CFG.openaiKey||'';
   document.getElementById('cfg-gemini').value       = CFG.geminiKey||'';
   document.getElementById('cfg-groq').value         = CFG.groqKey||'';
+  document.getElementById('cfg-claude').value       = CFG.claudeKey||'';
   document.getElementById('cfg-access-token').value = CFG.accessToken||'';
   document.getElementById('gemini-test-status').textContent = '';
   document.getElementById('groq-test-status').textContent   = '';
+  document.getElementById('claude-test-status').textContent = '';
   const statusEl = document.getElementById('yt-oauth-status');
   if (statusEl) statusEl.innerHTML = ytAccessToken
     ? '<span style="color:#1D9E75;font-weight:600">✓ YouTube account connected</span>'
@@ -1785,9 +2067,11 @@ async function saveSettings() {
   const oaiKey    = document.getElementById('cfg-openai').value.trim();
   const gemKey    = document.getElementById('cfg-gemini').value.trim();
   const groqKey   = document.getElementById('cfg-groq').value.trim();
+  const claudeKey = document.getElementById('cfg-claude').value.trim();
   CFG.openaiKey   = oaiKey;
   CFG.geminiKey   = gemKey;
   CFG.groqKey     = groqKey;
+  CFG.claudeKey   = claudeKey;
   if (oaiKey) {
     document.getElementById('status-text').textContent = 'YouTube + GPT-4o ready';
     document.getElementById('status-dot').style.background = '#C49A6C';
@@ -2745,15 +3029,16 @@ function generateAIIdeas() {
   loadEl.style.display='block'; resultsEl.innerHTML='';
 
   const ideas = AI_IDEAS_DB[cat] || AI_IDEAS_DB.tech;
+  const hasAI = CFG.openaiKey || CFG.claudeKey || CFG.geminiKey || CFG.groqKey;
 
-  if (CFG.openaiKey) {
-    const prompt = `You are a YouTube content strategist for a tech review channel called OrangeTech (@Creativeorangetech) with 1,700 subscribers focused on ${cat} content. Generate 6 specific video ideas optimized for the YouTube algorithm in 2026. Each idea should have a title, the angle (hook type), and a one-sentence hook. Format as JSON array: [{"title":"...","angle":"...","hook":"..."}]. Make the titles compelling and search-optimized. Focus on budget/value tech for real people.`;
-    callOpenAI([{role:'user',content:prompt}], 'gpt-4o', 800)
+  if (hasAI) {
+    const prompt = `You are a YouTube content strategist for a tech review channel called OrangeTech (@Creativeorangetech) with 1,700 subscribers focused on ${cat} content. Generate 6 specific video ideas optimized for the YouTube algorithm in 2026. Each idea should have a title, the angle (hook type), and a one-sentence hook. Return ONLY a JSON array, no code fences: [{"title":"...","angle":"...","hook":"..."}]. Make the titles compelling and search-optimized. Focus on budget/value tech for real people.`;
+    callAI_viral(prompt, 800)
       .then(reply => {
         loadEl.style.display='none';
         try {
-          const parsed = JSON.parse(reply.replace(/```json|```/g,'').trim());
-          renderAIIdeas(parsed);
+          const arr = extractJSON(reply) || JSON.parse(reply.replace(/```json|```/g,'').trim());
+          if (Array.isArray(arr)) renderAIIdeas(arr); else renderAIIdeas(ideas);
         } catch(e) { renderAIIdeas(ideas); }
       })
       .catch(() => { loadEl.style.display='none'; renderAIIdeas(ideas); });
@@ -3784,13 +4069,14 @@ function analyzeScript() {
   document.getElementById('analyze-rewrites').style.display  = 'block';
   document.getElementById('analyze-empty').style.display     = 'none';
 
-  // ── 9. AI Boost (if OpenAI key present) ───────────────────
-  if (CFG.openaiKey) {
+  // ── 9. AI Deep Analysis (Claude → ChatGPT → Gemini → Groq) ─────
+  if (CFG.claudeKey || CFG.openaiKey || CFG.geminiKey || CFG.groqKey) {
+    const aiName = aiRoutingLabel('script');
     const aiCard = document.getElementById('analyze-rewrites');
     const aiExtra = document.createElement('div');
     aiExtra.innerHTML = `<div style="margin-top:16px;padding-top:16px;border-top:2px dashed #bfdbfe">
-      <div style="font-size:11px;font-weight:700;color:#C49A6C;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">🤖 GPT-4o Deep Analysis — Loading…</div>
-      <div id="ai-script-result" style="font-size:12px;color:#5a7a9a">Sending to ChatGPT…</div>
+      <div style="font-size:11px;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">✍️ ${aiName} Deep Script Analysis — Loading…</div>
+      <div id="ai-script-result" style="font-size:12px;color:#5a7a9a">Sending to ${aiName}…</div>
     </div>`;
     aiCard.appendChild(aiExtra);
     analyzeScriptWithAI(raw).then(result => {
@@ -4419,6 +4705,262 @@ function exportFullScript() {
   a.click();
 }
 
+// ── ✨ Polish Script with Claude ─────────────────────────────────
+async function polishScript() {
+  const hasAI = CFG.claudeKey || CFG.openaiKey || CFG.geminiKey || CFG.groqKey;
+  if (!hasAI) { alert('Add a Claude key (best for polish) or any AI key in Settings.'); return; }
+  if (!currentFullScript) { alert('Generate a script first.'); return; }
+
+  const btn = document.getElementById('polish-btn');
+  const body = document.getElementById('script-modal-body');
+  const aiName = aiRoutingLabel('polish');
+
+  btn.textContent = '⏳ Polishing…';
+  btn.disabled = true;
+
+  const prompt = `You are an expert YouTube script editor. Below is a rough draft script for a tech review channel called OrangeTech. Polish it to make it:
+- Sound natural and conversational (no "Hey guys!", no "Smash that like button")
+- Keep the exact structure but improve every line's flow and rhythm
+- Tighten the hook to be more gripping (first 15 seconds are crucial)
+- Make CTAs feel unscripted and human
+- Remove filler words and passive voice
+- The channel's voice: direct, honest, slightly casual, knowledgeable
+
+Return the full polished script with the same section headers. Keep all [CUE] markers.
+
+ORIGINAL SCRIPT:
+${currentFullScript.slice(0, 4000)}`;
+
+  try {
+    const polished = await callAI_polish(prompt, 1500);
+    // Update the modal body with polished version formatted nicely
+    body.innerHTML = `<div class="script-box">
+      <div class="script-header">
+        <div class="script-dot" style="background:#a78bfa"></div>
+        <div class="script-dot" style="background:#7c3aed"></div>
+        <span class="script-label">✨ Polished by ${aiName}</span>
+      </div>
+      <div class="script-body">
+        ${polished.replace(/\n\n/g,'</p><p style="margin:0 0 12px">').replace(/\n/g,'<br>').replace(/\[([A-Z\s]+)\]/g,'<span class="script-cue">[$1]</span>')}
+      </div>
+    </div>`;
+    currentFullScript = polished;
+    btn.textContent = '✓ Polished!';
+    btn.style.color = '#34d399';
+    btn.style.borderColor = '#065f46';
+    setTimeout(() => {
+      btn.textContent = '✨ Polish';
+      btn.style.color = '#a78bfa';
+      btn.style.borderColor = '#7c3aed';
+      btn.disabled = false;
+    }, 3000);
+  } catch(e) {
+    btn.textContent = '✗ Error';
+    btn.style.color = '#ef4444';
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = '✨ Polish'; btn.style.color = '#a78bfa'; }, 3000);
+    alert('Polish failed: ' + e.message);
+  }
+}
+
+// ── 🤖 AI Script Writer (from AI tab) ───────────────────────────
+async function aiWriteScript() {
+  const product = document.getElementById('sw-product').value.trim();
+  if (!product) { alert('Enter a product or topic first.'); return; }
+  const hasAI = CFG.claudeKey || CFG.openaiKey || CFG.geminiKey || CFG.groqKey;
+  if (!hasAI) { alert('Add an AI key in Settings (Claude recommended for scripts).'); return; }
+
+  const format  = document.getElementById('sw-format').value;
+  const hook    = document.getElementById('sw-hook').value;
+  const price   = document.getElementById('sw-price').value.trim();
+  const verdict = document.getElementById('sw-verdict').value.trim();
+  const aiName  = aiRoutingLabel('script');
+
+  const loadEl  = document.getElementById('sw-loading');
+  const msgEl   = document.getElementById('sw-loading-msg');
+  const resultEl= document.getElementById('sw-result');
+  const badge   = document.getElementById('script-writer-ai-badge');
+
+  badge.textContent = `Using: ${aiName}`;
+  loadEl.style.display = 'block';
+  msgEl.textContent = `Writing with ${aiName}…`;
+  resultEl.innerHTML = '';
+
+  const formatDesc = {
+    long:'long-form YouTube review video (8-12 minutes)',
+    short:'YouTube Short script (60 seconds)',
+    review:'honest product review video (8 minutes)',
+    comparison:'VS comparison video (10 minutes)',
+    listicle:'Top 5 roundup video (8 minutes)'
+  }[format] || 'YouTube video';
+
+  const hookDesc = {
+    challenge:'challenge/disbelief (start by pushing back on common belief)',
+    story:'personal story (start with a specific moment)',
+    stat:'shocking stat or surprising fact',
+    question:'provocative question that creates immediate curiosity'
+  }[hook] || 'strong hook';
+
+  const prompt = `Write a complete word-for-word YouTube script for a ${formatDesc} about the ${product}${price ? ` (priced at ${price})` : ''}.
+
+Channel: OrangeTech (@Creativeorangetech) — tech review channel, honest budget/value focus, industrial designer perspective.
+Hook type: ${hookDesc}
+${verdict ? `Core verdict/angle: ${verdict}` : ''}
+
+Structure to follow:
+[HOOK] — First 15-20 seconds. ${hookDesc}. Must grab attention immediately.
+[SETUP] — 20-60 seconds. Who this is for + your context with the product.
+[THESIS] — The one central argument this video proves.
+[LIVED EXPERIENCE] — 3 specific real-world test moments (show don't list).
+[REAL TALK] — 2-3 honest criticisms with specific examples.
+[VERDICT] — "Get this if X. Skip if Y." + price mention + one alternative.
+[CALLBACK CLOSE] — Return to opening tension, resolve it, one natural CTA.
+
+Rules:
+- No "Hey guys welcome back", no "Smash that like button", no "without further ado"
+- Every section has word-for-word dialogue, not bullet points
+- Include B-roll notes in [brackets] where relevant
+- Keep the voice direct, honest, slightly casual, and knowledgeable
+- State the price clearly and early
+- Write the full script, not a summary
+
+Write it now:`;
+
+  try {
+    const script = await callAI_script(prompt, 1500);
+    loadEl.style.display = 'none';
+
+    // Format and display
+    const formatted = script
+      .replace(/\[([A-Z\s\/]+)\]/g, '<span class="script-cue">[$1]</span>')
+      .replace(/\n\n/g, '</p><p style="margin:0 0 10px">')
+      .replace(/\n/g, '<br>');
+
+    resultEl.innerHTML = `
+      <div class="script-box" style="margin-top:0">
+        <div class="script-header">
+          <div class="script-dot" style="background:#a78bfa"></div>
+          <div class="script-dot" style="background:#7c3aed"></div>
+          <div class="script-dot" style="background:#C49A6C"></div>
+          <span class="script-label">AI Script — ${product} — Written by ${aiName}</span>
+        </div>
+        <div class="script-body"><p style="margin:0 0 10px">${formatted}</p></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button onclick="copyText(document.getElementById('sw-raw-text').value)" class="pill-gray" style="font-size:12px">Copy Script</button>
+        <button onclick="polishScriptFromWriter()" class="pill-camel" style="font-size:12px;border:1px solid #7c3aed;color:#a78bfa">✨ Polish with ${aiRoutingLabel('polish')}</button>
+      </div>
+      <textarea id="sw-raw-text" style="display:none">${script.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`;
+
+    // Store as currentFullScript so Polish button also works
+    currentFullScript = script;
+    document.getElementById('script-modal-title').textContent = `${product} — AI Script`;
+  } catch(e) {
+    loadEl.style.display = 'none';
+    resultEl.innerHTML = `<div style="color:#ef4444;font-size:12px;padding:10px;background:#2a1a1a;border-radius:8px">✗ ${e.message}</div>`;
+  }
+}
+
+// Polish from the Script Writer card (uses currentFullScript)
+async function polishScriptFromWriter() {
+  const resultEl = document.getElementById('sw-result');
+  const aiName = aiRoutingLabel('polish');
+  const hasAI = CFG.claudeKey || CFG.openaiKey || CFG.geminiKey || CFG.groqKey;
+  if (!hasAI || !currentFullScript) return;
+
+  const loadEl = document.getElementById('sw-loading');
+  const msgEl  = document.getElementById('sw-loading-msg');
+  loadEl.style.display = 'block';
+  msgEl.textContent = `Polishing with ${aiName}…`;
+
+  const prompt = `Polish this YouTube script. Make it more natural, tighten every line, improve the hook, remove filler. Keep the structure and cue markers. Return the full polished script.
+
+SCRIPT:
+${currentFullScript.slice(0,4000)}`;
+
+  try {
+    const polished = await callAI_polish(prompt, 1500);
+    loadEl.style.display = 'none';
+    currentFullScript = polished;
+    const formatted = polished
+      .replace(/\[([A-Z\s\/]+)\]/g, '<span class="script-cue">[$1]</span>')
+      .replace(/\n\n/g,'</p><p style="margin:0 0 10px">')
+      .replace(/\n/g,'<br>');
+    resultEl.innerHTML = `
+      <div class="script-box" style="margin-top:0">
+        <div class="script-header">
+          <div class="script-dot" style="background:#34d399"></div>
+          <div class="script-dot" style="background:#059669"></div>
+          <span class="script-label">✨ Polished by ${aiName}</span>
+        </div>
+        <div class="script-body"><p style="margin:0 0 10px">${formatted}</p></div>
+      </div>
+      <button onclick="copyText(document.getElementById('sw-polished-raw').value)" class="pill-gray" style="font-size:12px;margin-top:8px">Copy Polished Script</button>
+      <textarea id="sw-polished-raw" style="display:none">${polished.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`;
+  } catch(e) {
+    loadEl.style.display = 'none';
+    resultEl.innerHTML += `<div style="color:#ef4444;font-size:12px;padding:8px;background:#2a1a1a;border-radius:8px;margin-top:8px">Polish failed: ${e.message}</div>`;
+  }
+}
+
+// 💡 Generate viral ideas first, then offer to write script
+async function aiWriteViralIdeas() {
+  const product = document.getElementById('sw-product').value.trim();
+  if (!product) { alert('Enter a product or topic first.'); return; }
+  const hasAI = CFG.claudeKey || CFG.openaiKey || CFG.geminiKey || CFG.groqKey;
+  if (!hasAI) { alert('Add an AI key in Settings.'); return; }
+
+  const aiName = aiRoutingLabel('viral');
+  const loadEl  = document.getElementById('sw-loading');
+  const msgEl   = document.getElementById('sw-loading-msg');
+  const resultEl= document.getElementById('sw-result');
+
+  loadEl.style.display = 'block';
+  msgEl.textContent = `Getting viral ideas from ${aiName}…`;
+  resultEl.innerHTML = '';
+
+  const prompt = `Generate 5 viral YouTube video ideas for a tech review channel (OrangeTech) about the ${product}. Each idea should be a compelling title + one-line hook optimized for the 2026 YouTube algorithm. Focus on budget/value tech, honest reviews.
+Return JSON array only, no code fences: [{"title":"...","hook":"...","angle":"..."}]`;
+
+  try {
+    const raw = await callAI_viral(prompt, 600);
+    loadEl.style.display = 'none';
+    let ideas = [];
+    try { ideas = extractJSON(raw) || JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch(e) {}
+
+    if (!Array.isArray(ideas) || !ideas.length) {
+      resultEl.innerHTML = `<div style="background:#0d1f3c;border-radius:8px;padding:12px;font-size:12px;color:#e8f0f8;white-space:pre-wrap">${raw}</div>`;
+      return;
+    }
+
+    resultEl.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">💡 Viral Ideas — via ${aiName}</div>
+      ${ideas.map((idea,i) => `
+        <div style="background:#0a1628;border:1px solid #1e3a5c;border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600;color:#e8f0f8;margin-bottom:4px">${idea.title||idea.hook||'Idea '+(i+1)}</div>
+          ${idea.hook ? `<div style="font-size:11px;color:#C49A6C;font-style:italic;margin-bottom:6px">"${idea.hook}"</div>` : ''}
+          ${idea.angle ? `<div style="font-size:10px;color:#7a9bbf">Angle: ${idea.angle}</div>` : ''}
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button onclick="document.getElementById('sw-verdict').value='${(idea.title||'').replace(/'/g,'\\&apos;').slice(0,60)}';aiWriteScript()" class="pill-orange" style="font-size:10px;padding:3px 8px">✍️ Write Script</button>
+            <button onclick="saveIdeaFromAI('${(idea.title||idea.hook||'').replace(/'/g,'\\&apos;')}')" class="pill-gray" style="font-size:10px;padding:3px 8px">Save</button>
+          </div>
+        </div>`).join('')}`;
+  } catch(e) {
+    loadEl.style.display = 'none';
+    resultEl.innerHTML = `<div style="color:#ef4444;font-size:12px;padding:10px;background:#2a1a1a;border-radius:8px">✗ ${e.message}</div>`;
+  }
+}
+
+// Update the routing bar labels whenever AI tab opens
+function refreshRoutingBar() {
+  document.getElementById('route-viral-lbl').textContent    = aiRoutingLabel('viral');
+  document.getElementById('route-script-lbl').textContent   = aiRoutingLabel('script');
+  document.getElementById('route-research-lbl').textContent = aiRoutingLabel('research');
+  document.getElementById('route-polish-lbl').textContent   = aiRoutingLabel('polish');
+  document.getElementById('script-writer-ai-badge').textContent = 'Using: ' + aiRoutingLabel('script');
+}
+
 // ══════════════════════════════════════════════════════════════
 // AI HELPERS — Gemini (free) + OpenAI fallback
 // ══════════════════════════════════════════════════════════════
@@ -4474,23 +5016,112 @@ async function callAI(prompt, max_tokens=800) {
   throw new Error('No AI key — add a free Groq or Gemini key in Settings.');
 }
 
+// ── Claude (Anthropic) ────────────────────────────────────────
+// Best for: script writing, final polish, nuanced long-form text
+async function callClaude(prompt, max_tokens=1200) {
+  if (!CFG.claudeKey) throw new Error('No Claude key');
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': CFG.claudeKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens,
+      messages:[{ role:'user', content: prompt }]
+    })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'Claude API error');
+  return d.content?.[0]?.text || '';
+}
+
+async function testClaudeKey() {
+  const el = document.getElementById('claude-test-status');
+  el.textContent = 'Testing…';
+  try {
+    const r = await callClaude('Say "OK" and nothing else.', 10);
+    el.style.color = '#1D9E75';
+    el.textContent = '✓ Claude connected';
+  } catch(e) {
+    el.style.color = '#ef4444';
+    el.textContent = '✗ ' + e.message;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// TASK-SPECIFIC AI ROUTING
+// Each task uses the best available AI for that job.
+// Priority order is based on what each AI does best.
+// ════════════════════════════════════════════════════════════════
+
+// 💡 Viral Ideas — ChatGPT best for trending hooks, Claude as backup
+async function callAI_viral(prompt, max_tokens=800) {
+  if (CFG.openaiKey)  return callOpenAI([{role:'user',content:prompt}],'gpt-4o',max_tokens);
+  if (CFG.claudeKey)  return callClaude(prompt, max_tokens);
+  if (CFG.geminiKey)  return callGemini(prompt, max_tokens);
+  if (CFG.groqKey)    return callGroq(prompt, max_tokens);
+  throw new Error('No AI key — add ChatGPT, Claude, Gemini, or Groq in Settings.');
+}
+
+// ✍️ Script Writing — Claude first (best long-form prose), then free fallbacks
+async function callAI_script(prompt, max_tokens=1500) {
+  if (CFG.claudeKey)  return callClaude(prompt, max_tokens);
+  if (CFG.groqKey)    return callGroq(prompt, max_tokens);
+  if (CFG.geminiKey)  return callGemini(prompt, max_tokens);
+  if (CFG.openaiKey)  return callOpenAI([{role:'user',content:prompt}],'gpt-4o',max_tokens);
+  throw new Error('No AI key — add Claude (best for scripts) or Groq (free) in Settings.');
+}
+
+// 🔍 Research — ChatGPT best for factual search, Gemini as backup
+async function callAI_research(prompt, max_tokens=800) {
+  if (CFG.openaiKey)  return callOpenAI([{role:'user',content:prompt}],'gpt-4o',max_tokens);
+  if (CFG.geminiKey)  return callGemini(prompt, max_tokens);
+  if (CFG.claudeKey)  return callClaude(prompt, max_tokens);
+  if (CFG.groqKey)    return callGroq(prompt, max_tokens);
+  throw new Error('No AI key — add ChatGPT or Gemini in Settings.');
+}
+
+// ✨ Final Polish — Claude best for tone, flow, and natural language
+async function callAI_polish(prompt, max_tokens=1500) {
+  if (CFG.claudeKey)  return callClaude(prompt, max_tokens);
+  if (CFG.openaiKey)  return callOpenAI([{role:'user',content:prompt}],'gpt-4o',max_tokens);
+  if (CFG.geminiKey)  return callGemini(prompt, max_tokens);
+  if (CFG.groqKey)    return callGroq(prompt, max_tokens);
+  throw new Error('No AI key — add Claude (best for polish) or ChatGPT in Settings.');
+}
+
+// Helper: which AI will handle a given task right now
+function aiRoutingLabel(task) {
+  if (task==='viral')  return CFG.openaiKey?'ChatGPT':CFG.claudeKey?'Claude':CFG.geminiKey?'Gemini':CFG.groqKey?'Groq':'—';
+  if (task==='script') return CFG.claudeKey?'Claude':CFG.groqKey?'Groq':CFG.geminiKey?'Gemini':CFG.openaiKey?'ChatGPT':'—';
+  if (task==='research')return CFG.openaiKey?'ChatGPT':CFG.geminiKey?'Gemini':CFG.claudeKey?'Claude':CFG.groqKey?'Groq':'—';
+  if (task==='polish') return CFG.claudeKey?'Claude':CFG.openaiKey?'ChatGPT':CFG.geminiKey?'Gemini':CFG.groqKey?'Groq':'—';
+  return '—';
+}
+
 // Robust JSON extractor — handles code fences, trailing text, etc.
 function extractJSON(raw) {
   if (!raw) return null;
   // Strip markdown code fences: ```json ... ``` or ``` ... ```
   const stripped = raw.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
-  // Try to find a JSON object
   const candidates = [stripped, raw];
   for (const s of candidates) {
-    // Match from first { to last }
-    const m = s.match(/\{[\s\S]*\}/);
-    if (!m) continue;
-    try { return JSON.parse(m[0]); } catch(e) {}
-    // If parse fails, try to fix trailing commas
-    try {
-      const fixed = m[0].replace(/,\s*([\]}])/g, '$1');
-      return JSON.parse(fixed);
-    } catch(e) {}
+    // Try array first: match from first [ to last ]
+    const arrM = s.match(/\[[\s\S]*\]/);
+    if (arrM) {
+      try { return JSON.parse(arrM[0]); } catch(e) {}
+      try { return JSON.parse(arrM[0].replace(/,\s*([\]}])/g, '$1')); } catch(e) {}
+    }
+    // Then try object: match from first { to last }
+    const objM = s.match(/\{[\s\S]*\}/);
+    if (objM) {
+      try { return JSON.parse(objM[0]); } catch(e) {}
+      try { return JSON.parse(objM[0].replace(/,\s*([\]}])/g, '$1')); } catch(e) {}
+    }
   }
   return null;
 }
@@ -4534,7 +5165,8 @@ async function callOpenAIVision(base64Image, prompt, max_tokens=800) {
 // Enhanced analyzeScript — uses OpenAI if key present
 async function analyzeScriptWithAI(scriptText) {
   const el = document.getElementById('video-ai-body');
-  if (el) { el.innerHTML = '<div style="color:#5a7a9a">🤖 Calling GPT-4o…</div>'; }
+  const aiName = aiRoutingLabel('script');
+  if (el) { el.innerHTML = `<div style="color:#5a7a9a">🤖 Sending to ${aiName}…</div>`; }
   const prompt = `You are a YouTube video script coach. Analyze this script and give:
 1. Hook Quality (score 0-100 + 1 sentence reason)
 2. Story Arc strength (score + what's missing)
@@ -4546,8 +5178,7 @@ Keep feedback sharp, specific, and actionable. Format in clear sections.
 SCRIPT:
 ${scriptText.slice(0, 3500)}`;
 
-  const reply = await callOpenAI([{ role:'user', content:prompt }]);
-  return reply;
+  return callAI_script(prompt, 1200);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -5170,6 +5801,145 @@ if (CFG.apiKey && CFG.channelId) {
     loadChannelData();
   }
 }
+
+// ════════════════════════════════════════════════════════════════
+// MOBILE BOTTOM NAV — iOS-style (FORM App pattern)
+// ════════════════════════════════════════════════════════════════
+
+// Live clock for the iOS status bar
+function tickClock() {
+  const el = document.getElementById('ios-clock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}).replace(' AM','').replace(' PM','');
+}
+tickClock();
+setInterval(tickClock, 10000);
+
+// Primary nav items in bottom bar
+const MBN_PRIMARY = [
+  { id:'overview',  icon:'📊', label:'Overview' },
+  { id:'ai',        icon:'✨', label:'AI Writer' },
+  { id:'plan',      icon:'📅', label:'Plan'     },
+  { id:'products',  icon:'📦', label:'Products' },
+  { id:'_more',     icon:'⋯',  label:'More'     },
+];
+
+// Secondary tabs that live in the "More" sheet
+const MBN_MORE = [
+  { id:'keywords',  icon:'🔍', label:'Keywords',  sub:'Trend research'  },
+  { id:'optimizer', icon:'🎯', label:'Optimize',  sub:'SEO scoring'     },
+  { id:'video',     icon:'📹', label:'Check',     sub:'Video analyzer'  },
+  { id:'ideas',     icon:'💡', label:'Ideas',     sub:'Content ideas'   },
+];
+
+let moreSheetOpen = false;
+
+function renderMobileNav() {
+  const nav = document.getElementById('mobile-bottom-nav');
+  if (!nav) return;
+  nav.innerHTML = MBN_PRIMARY.map(item => `
+    <button class="mbn-item" id="mbn-${item.id}" onclick="mbnTap('${item.id}')">
+      <div class="mbn-icon">${item.icon}</div>
+      <div class="mbn-label">${item.label}</div>
+    </button>`).join('');
+  updateMbnActive();
+}
+
+function mbnTap(id) {
+  if (id === '_more') {
+    toggleMoreSheet();
+    return;
+  }
+  // close sheet if open
+  closeMoreSheet();
+  switchTab(id);
+  updateMbnActive(id);
+}
+
+function updateMbnActive(activeId) {
+  const currentTab = activeId || (document.querySelector('.tab-btn.active')?.id?.replace('tab-','') || 'overview');
+  MBN_PRIMARY.forEach(item => {
+    const btn = document.getElementById('mbn-'+item.id);
+    if (!btn) return;
+    if (item.id === '_more') {
+      btn.classList.toggle('active', MBN_MORE.some(m => m.id === currentTab));
+    } else {
+      btn.classList.toggle('active', item.id === currentTab);
+    }
+  });
+  // Update more sheet items too
+  MBN_MORE.forEach(item => {
+    const btn = document.getElementById('mbn-sheet-'+item.id);
+    if (btn) btn.classList.toggle('active-sheet', item.id === currentTab);
+  });
+}
+
+function toggleMoreSheet() {
+  moreSheetOpen ? closeMoreSheet() : openMoreSheet();
+}
+
+function openMoreSheet() {
+  moreSheetOpen = true;
+  document.getElementById('mbn-more-sheet').classList.add('open');
+  document.getElementById('mbn-overlay').classList.add('open');
+}
+
+function closeMoreSheet() {
+  moreSheetOpen = false;
+  document.getElementById('mbn-more-sheet').classList.remove('open');
+  document.getElementById('mbn-overlay').classList.remove('open');
+}
+
+function mbnMoreTap(id) {
+  closeMoreSheet();
+  switchTab(id);
+  updateMbnActive(id);
+}
+
+// Patch switchTab to keep bottom nav in sync
+const _origSwitchTab = switchTab;
+window.switchTab = function(name) {
+  _origSwitchTab(name);
+  updateMbnActive(name);
+};
+
+// Init on load
+renderMobileNav();
+
 </script>
+
+<!-- ══════════════════════════════════════
+     MOBILE BOTTOM NAV (FORM-style iOS nav)
+══════════════════════════════════════ -->
+<nav class="mobile-bottom-nav" id="mobile-bottom-nav"></nav>
+
+<!-- More sheet overlay -->
+<div class="mbn-overlay" id="mbn-overlay" onclick="closeMoreSheet()"></div>
+
+<!-- More sheet -->
+<div class="mbn-more-sheet" id="mbn-more-sheet">
+  <div class="mbn-sheet-handle"></div>
+  <div class="mbn-sheet-title">More tools</div>
+  <div class="mbn-sheet-grid">
+    <button class="mbn-sheet-item" id="mbn-sheet-keywords"  onclick="mbnMoreTap('keywords')">
+      <span class="mbn-sheet-icon">🔍</span>
+      <div><div class="mbn-sheet-label">Keywords</div><div class="mbn-sheet-sub">Trend research</div></div>
+    </button>
+    <button class="mbn-sheet-item" id="mbn-sheet-optimizer" onclick="mbnMoreTap('optimizer')">
+      <span class="mbn-sheet-icon">🎯</span>
+      <div><div class="mbn-sheet-label">Optimize</div><div class="mbn-sheet-sub">SEO scoring</div></div>
+    </button>
+    <button class="mbn-sheet-item" id="mbn-sheet-video"     onclick="mbnMoreTap('video')">
+      <span class="mbn-sheet-icon">📹</span>
+      <div><div class="mbn-sheet-label">Check</div><div class="mbn-sheet-sub">Video analyzer</div></div>
+    </button>
+    <button class="mbn-sheet-item" id="mbn-sheet-ideas"     onclick="mbnMoreTap('ideas')">
+      <span class="mbn-sheet-icon">💡</span>
+      <div><div class="mbn-sheet-label">Ideas</div><div class="mbn-sheet-sub">Content ideas</div></div>
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
